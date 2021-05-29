@@ -1,0 +1,3 @@
+[submodule "ext/black-library-common"]
+	path = ext/black-library-common
+	url = git@github.com:Black-Library/black-library-common.git
