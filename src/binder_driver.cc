@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 
     Binder binder("");
 
-    binder.Bind("some-uuid-0");
+    binder.Bind("some-uuid-0", "test-0");
 
     return 0;
 }

@@ -5,6 +5,7 @@
 #ifndef __BLACK_LIBRARY_CORE_BINDER_BLACKLIBRARYBINDER_H__
 #define __BLACK_LIBRARY_CORE_BINDER_BLACKLIBRARYBINDER_H__
 
+#include <mutex>
 #include <string>
 
 namespace black_library {
@@ -18,10 +19,11 @@ public:
     explicit BlackLibraryBinder(const std::string &storage_dir);
     BlackLibraryBinder &operator = (BlackLibraryBinder &&) = default;
 
-    bool Bind(const std::string &uuid);
+    bool Bind(const std::string &uuid, const std::string &name);
 
 private:
     std::string storage_dir_;
+    std::mutex mutex_;
 };
 
 } // namespace binder
