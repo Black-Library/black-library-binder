@@ -59,7 +59,15 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     for (const auto & file : file_list)
     {
-        std::cout << "File: " + file + " - " << black_library::core::common::GetChapterIndex(file) << std::endl;
+        std::cout << "Chapter file: " + file + " - Number: " << black_library::core::common::GetChapterIndex(file) << std::endl;
+    }
+
+    size_t last_chapter_num = black_library::core::common::GetChapterIndex(file_list.back());
+
+    if (last_chapter_num != file_list.size())
+    {
+        std::cout << "Error: chapter number " << last_chapter_num << " and list size: " << file_list.size() << " do not match" << std::endl;
+        return false;
     }
 
     auto bind_list = black_library::core::common::GetFileList(target_path, "_VER[0-9]{4}.\\html$");
@@ -68,13 +76,13 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     for (const auto & file : bind_list)
     {
-        std::cout << "File 2: " + file + " - " << black_library::core::common::GetChapterIndex(file) << std::endl;
+        std::cout << "Bind file: " + file + " - " << black_library::core::common::GetChapterIndex(file) << std::endl;
     }
 
     size_t bind_index = 0;
 
-    // if (!bind_list.empty())
-    //     bind_index = black_library::core::common::GetBindIndex(bind_list.back());
+    if (!bind_list.empty())
+        bind_index = black_library::core::common::GetBindIndex(bind_list.back()) + 1;
 
     char name_buffer [BIND_FILENAME_BUFFER_SIZE];
 
@@ -85,7 +93,6 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     const std::string file_name = std::string(name_buffer);
 
     std::cout << "Adding: " << file_name << std::endl;
-
 
     return true;
 }
