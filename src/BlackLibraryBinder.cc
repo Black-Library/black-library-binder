@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 
 #include <FileOperations.h>
 
@@ -53,20 +54,21 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
         return false;
     }
 
-    auto file_list = black_library::core::common::GetFileList(target_path, "^CH?\\d*");
+    auto doc_list = black_library::core::common::GetFileList(target_path, "^CH?\\d*");
 
-    std::sort(file_list.begin(), file_list.end());
+    std::sort(doc_list.begin(), doc_list.end());
 
-    for (const auto & file : file_list)
+    for (const auto & file : doc_list)
     {
         std::cout << "Chapter file: " + file + " - Number: " << black_library::core::common::GetChapterIndex(file) << std::endl;
     }
 
-    size_t last_chapter_num = black_library::core::common::GetChapterIndex(file_list.back());
+    size_t last_chapter_num = black_library::core::common::GetChapterIndex(doc_list.back());
 
-    if (last_chapter_num != file_list.size())
+    // document files start at 1
+    if (last_chapter_num != doc_list.size())
     {
-        std::cout << "Error: chapter number " << last_chapter_num << " and list size: " << file_list.size() << " do not match" << std::endl;
+        std::cout << "Error: chapter number " << last_chapter_num << " and list size: " << doc_list.size() << " do not match" << std::endl;
         return false;
     }
 
@@ -76,7 +78,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     for (const auto & file : bind_list)
     {
-        std::cout << "Bind file: " + file + " - " << black_library::core::common::GetChapterIndex(file) << std::endl;
+        std::cout << "Bind file: " + file + " - " << black_library::core::common::GetBindIndex(file) << std::endl;
     }
 
     size_t bind_index = 0;
@@ -90,9 +92,40 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     if (res < 0)
         return false;
 
-    const std::string file_name = std::string(name_buffer);
+    const std::string bind_name = std::string(name_buffer);
 
-    std::cout << "Adding: " << file_name << std::endl;
+    std::cout << "Binding: " << bind_name << std::endl;
+
+    if (black_library::core::common::Exists(target_path + '/' + bind_name))
+    {
+        std::cout << "Error: file already exists" << std::endl;
+        return false;
+    }
+
+    std::fstream output_file;
+
+    output_file.open(target_path + '/' + bind_name, std::fstream::out | std::fstream::trunc);
+
+    for (const auto & file : doc_list)
+    {
+        std::ifstream input_file;
+
+        std::cout << "bind: " << file << std::endl;
+
+        input_file.open(target_path + '/' + file, std::fstream::in);
+
+        if (!input_file.is_open())
+        {
+            std::cout << "Error: input file: " << target_path + '/' + file << " could not be opened" << std::endl;
+            return false;
+        }
+
+        output_file << input_file.rdbuf();
+
+        input_file.close();
+    }
+
+    output_file.close();
 
     return true;
 }
