@@ -34,3 +34,6 @@
 # Build Artifacts
 build
 install
+
+# IDE
+.vscode
