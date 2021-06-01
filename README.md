@@ -1,2 +1,2 @@
-# black-library-file-stich
-Black Library file stiching library
+# black-library-binder
+Black Library binding library
