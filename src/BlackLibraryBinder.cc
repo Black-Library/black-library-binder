@@ -18,6 +18,8 @@ namespace binder {
 
 #define BIND_FILENAME_BUFFER_SIZE 128
 
+namespace BlackLibraryCommon = black_library::core::common;
+
 BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
     storage_dir_(storage_dir),
     mutex_()
@@ -32,7 +34,7 @@ BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
     if (storage_dir_.back() == '/')
         storage_dir_.pop_back();
 
-    if (!black_library::core::common::CheckFilePermission(storage_dir_))
+    if (!BlackLibraryCommon::CheckFilePermission(storage_dir_))
     {
         std::cout << "Error: binder could not access storage directory" << std::endl;
         return;
@@ -48,22 +50,22 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     std::string target_path = storage_dir_ + '/' + uuid;
     std::cout << "Bind target: " << target_path << std::endl;
 
-    if (!black_library::core::common::Exists(target_path))
+    if (!BlackLibraryCommon::Exists(target_path))
     {
         std::cout << "Error: binder target does not exist: " << target_path << std::endl;
         return false;
     }
 
-    auto doc_list = black_library::core::common::GetFileList(target_path, "^CH?\\d*");
+    auto doc_list = BlackLibraryCommon::GetFileList(target_path, "^CH?\\d*");
 
     std::sort(doc_list.begin(), doc_list.end());
 
     for (const auto & file : doc_list)
     {
-        std::cout << "Chapter file: " + file + " - Number: " << black_library::core::common::GetChapterIndex(file) << std::endl;
+        std::cout << "Chapter file: " + file + " - Number: " << BlackLibraryCommon::GetChapterIndex(file) << std::endl;
     }
 
-    size_t last_chapter_num = black_library::core::common::GetChapterIndex(doc_list.back());
+    size_t last_chapter_num = BlackLibraryCommon::GetChapterIndex(doc_list.back());
 
     // document files start at 1
     if (last_chapter_num != doc_list.size())
@@ -72,19 +74,19 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
         return false;
     }
 
-    auto bind_list = black_library::core::common::GetFileList(target_path, "_VER[0-9]{4}.\\html$");
+    auto bind_list = BlackLibraryCommon::GetFileList(target_path, "_VER[0-9]{4}.\\html$");
 
     std::sort(bind_list.begin(), bind_list.end());
 
     for (const auto & file : bind_list)
     {
-        std::cout << "Bind file: " + file + " - " << black_library::core::common::GetBindIndex(file) << std::endl;
+        std::cout << "Bind file: " + file + " - " << BlackLibraryCommon::GetBindIndex(file) << std::endl;
     }
 
     size_t bind_index = 0;
 
     if (!bind_list.empty())
-        bind_index = black_library::core::common::GetBindIndex(bind_list.back()) + 1;
+        bind_index = BlackLibraryCommon::GetBindIndex(bind_list.back()) + 1;
 
     char name_buffer [BIND_FILENAME_BUFFER_SIZE];
 
@@ -96,7 +98,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     std::cout << "Binding: " << bind_name << std::endl;
 
-    if (black_library::core::common::Exists(target_path + '/' + bind_name))
+    if (BlackLibraryCommon::Exists(target_path + '/' + bind_name))
     {
         std::cout << "Error: file already exists" << std::endl;
         return false;
