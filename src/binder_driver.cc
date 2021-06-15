@@ -10,7 +10,7 @@
 
 #include <BlackLibraryBinder.h>
 
-using Binder = black_library::core::binder::BlackLibraryBinder;
+namespace BlackLibraryBinder = black_library::core::binder;
 
 struct options
 {
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    Binder binder("");
+    BlackLibraryBinder::BlackLibraryBinder binder("");
 
     binder.Bind("some-uuid-0", "test-0");
 
