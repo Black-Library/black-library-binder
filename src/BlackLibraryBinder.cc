@@ -26,7 +26,7 @@ BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
 {
     if (storage_dir_.empty())
     {
-        storage_dir_ = "/mnt/store";
+        storage_dir_ = "/mnt/black-library/store";
         std::cout << "Empty storage dir given, using default: " << storage_dir_ << std::endl;
     }
 
