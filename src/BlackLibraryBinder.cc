@@ -21,6 +21,7 @@ namespace binder {
 namespace BlackLibraryCommon = black_library::core::common;
 
 BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
+    bind_dir_(storage_dir),
     storage_dir_(storage_dir),
     mutex_()
 {
@@ -36,7 +37,7 @@ BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
 
     if (!BlackLibraryCommon::CheckFilePermission(storage_dir_))
     {
-        std::cout << "Error: binder could not access storage directory" << std::endl;
+        std::cout << "Error: binder could not access storage directory" << storage_dir_ << std::endl;
         return;
     }
 
@@ -60,10 +61,10 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     std::sort(doc_list.begin(), doc_list.end());
 
-    for (const auto & file : doc_list)
-    {
-        std::cout << "Chapter file: " + file + " - Number: " << BlackLibraryCommon::GetChapterIndex(file) << std::endl;
-    }
+    // for (const auto & file : doc_list)
+    // {
+    //     std::cout << "Chapter file: " + file + " - Number: " << BlackLibraryCommon::GetChapterIndex(file) << std::endl;
+    // }
 
     size_t last_chapter_num = BlackLibraryCommon::GetChapterIndex(doc_list.back());
 
@@ -95,10 +96,11 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
         return false;
 
     const std::string bind_name = std::string(name_buffer);
+    const std::string bind_target = bind_dir_ + '/' + bind_name;
 
     std::cout << "Binding: " << bind_name << std::endl;
 
-    if (BlackLibraryCommon::Exists(target_path + '/' + bind_name))
+    if (BlackLibraryCommon::Exists(bind_target))
     {
         std::cout << "Error: file already exists" << std::endl;
         return false;
@@ -106,13 +108,13 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     std::fstream output_file;
 
-    output_file.open(target_path + '/' + bind_name, std::fstream::out | std::fstream::trunc);
+    output_file.open(bind_target, std::fstream::out | std::fstream::trunc);
 
     for (const auto & file : doc_list)
     {
         std::ifstream input_file;
 
-        std::cout << "bind: " << file << std::endl;
+        // std::cout << "bind: " << file << std::endl;
 
         input_file.open(target_path + '/' + file, std::fstream::in);
 
@@ -128,6 +130,33 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     }
 
     output_file.close();
+
+    return true;
+}
+
+bool BlackLibraryBinder::SetBindDir(const std::string &bind_dir)
+{
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    bind_dir_ = BlackLibraryCommon::SanitizeFilePath(bind_dir);
+
+    if (bind_dir_.empty())
+    {
+        bind_dir_ = "/mnt/black-library/output";
+        std::cout << "Empty bind dir given, using default: " << bind_dir_ << std::endl;
+    }
+
+    // okay to pop_back(), string isn't empty
+    if (bind_dir_.back() == '/')
+        bind_dir_.pop_back();
+
+    if (!BlackLibraryCommon::CheckFilePermission(bind_dir_))
+    {
+        std::cout << "Error: binder could not access bind directory" << bind_dir_ << std::endl;
+        return false;
+    }
+
+    std::cout << "Set bind dir: " << bind_dir_ << std::endl;
 
     return true;
 }

@@ -20,8 +20,10 @@ public:
     BlackLibraryBinder &operator = (BlackLibraryBinder &&) = default;
 
     bool Bind(const std::string &uuid, const std::string &name);
+    bool SetBindDir(const std::string &bind_dir);
 
 private:
+    std::string bind_dir_;
     std::string storage_dir_;
     std::mutex mutex_;
 };
