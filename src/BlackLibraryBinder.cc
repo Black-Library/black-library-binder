@@ -63,15 +63,15 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     // for (const auto & file : doc_list)
     // {
-    //     std::cout << "Chapter file: " + file + " - Number: " << BlackLibraryCommon::GetChapterIndex(file) << std::endl;
+    //     std::cout << "Section file: " + file + " - Number: " << BlackLibraryCommon::GetSectionIndex(file) << std::endl;
     // }
 
-    size_t last_chapter_num = BlackLibraryCommon::GetChapterIndex(doc_list.back());
+    size_t last_section_num = BlackLibraryCommon::GetSectionIndex(doc_list.back());
 
     // document files start at 1
-    if (last_chapter_num != doc_list.size())
+    if (last_section_num != doc_list.size())
     {
-        std::cout << "Error: chapter number " << last_chapter_num << " and list size: " << doc_list.size() << " do not match" << std::endl;
+        std::cout << "Error: section number " << last_section_num << " and list size: " << doc_list.size() << " do not match" << std::endl;
         return false;
     }
 
