@@ -57,7 +57,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
         return false;
     }
 
-    auto doc_list = BlackLibraryCommon::GetFileList(target_path, "^CH?\\d*");
+    auto doc_list = BlackLibraryCommon::GetFileList(target_path, "^SEC?\\d*");
 
     std::sort(doc_list.begin(), doc_list.end());
 
