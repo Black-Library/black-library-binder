@@ -51,7 +51,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     std::string target_path = storage_dir_ + '/' + uuid;
     std::cout << "Bind target: " << target_path << std::endl;
 
-    if (!BlackLibraryCommon::Exists(target_path))
+    if (!BlackLibraryCommon::FileExists(target_path))
     {
         std::cout << "Error: binder target does not exist: " << target_path << std::endl;
         return false;
@@ -100,7 +100,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     std::cout << "Binding: " << bind_name << std::endl;
 
-    if (BlackLibraryCommon::Exists(bind_target))
+    if (BlackLibraryCommon::FileExists(bind_target))
     {
         std::cout << "Error: file already exists" << std::endl;
         return false;
