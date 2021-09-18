@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <FileOperations.h>
+#include <LogOperations.h>
 
 #include <BlackLibraryBinder.h>
 
@@ -25,10 +26,12 @@ BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
     storage_dir_(storage_dir),
     mutex_()
 {
+    BlackLibraryCommon::InitRotatingLogger("binder", "/mnt/black-library/log/");
+
     if (storage_dir_.empty())
     {
         storage_dir_ = "/mnt/black-library/store";
-        std::cout << "Empty storage dir given, using default: " << storage_dir_ << std::endl;
+        BlackLibraryCommon::LogDebug("binder", "Empty storage dir given, using default: {}", storage_dir_);
     }
 
     // okay to pop_back(), string isn't empty
@@ -37,11 +40,11 @@ BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
 
     if (!BlackLibraryCommon::CheckFilePermission(storage_dir_))
     {
-        std::cout << "Error: binder could not access storage directory" << storage_dir_ << std::endl;
+        BlackLibraryCommon::LogError("binder", "Could not access storage directory: {}", storage_dir_);
         return;
     }
 
-    std::cout << "Using storage dir: " << storage_dir_ << std::endl;
+    BlackLibraryCommon::LogInfo("binder", "Binder using storage dir: {}", storage_dir_);
 }
 
 bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
@@ -49,11 +52,11 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     const std::lock_guard<std::mutex> lock(mutex_);
 
     std::string target_path = storage_dir_ + '/' + uuid;
-    std::cout << "Bind target: " << target_path << std::endl;
+    BlackLibraryCommon::LogInfo("binder", "Bind target: {}", target_path);
 
     if (!BlackLibraryCommon::FileExists(target_path))
     {
-        std::cout << "Error: binder target does not exist: " << target_path << std::endl;
+        BlackLibraryCommon::LogError("binder", "Binder target does not exist: {}", target_path);
         return false;
     }
 
@@ -61,17 +64,17 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     std::sort(doc_list.begin(), doc_list.end());
 
-    // for (const auto & file : doc_list)
-    // {
-    //     std::cout << "Section file: " + file + " - Number: " << BlackLibraryCommon::GetSectionIndex(file) << std::endl;
-    // }
+    for (const auto & file : doc_list)
+    {
+        BlackLibraryCommon::LogTrace("binder", "Section file: {} - Number: {}", file, BlackLibraryCommon::GetSectionIndex(file));
+    }
 
     size_t last_section_num = BlackLibraryCommon::GetSectionIndex(doc_list.back());
 
     // document files start at 1
     if (last_section_num != doc_list.size())
     {
-        std::cout << "Error: section number " << last_section_num << " and list size: " << doc_list.size() << " do not match" << std::endl;
+        BlackLibraryCommon::LogError("binder", "Section number {} - list size: {} do not match", last_section_num, doc_list.size());
         return false;
     }
 
@@ -81,7 +84,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     for (const auto & file : bind_list)
     {
-        std::cout << "Bind file: " + file + " - " << BlackLibraryCommon::GetBindIndex(file) << std::endl;
+        BlackLibraryCommon::LogDebug("binder", "Bind file: {} - {}", file, BlackLibraryCommon::GetBindIndex(file));
     }
 
     size_t bind_index = 0;
@@ -98,11 +101,11 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     const std::string bind_name = std::string(name_buffer);
     const std::string bind_target = bind_dir_ + '/' + bind_name;
 
-    std::cout << "Binding: " << bind_name << std::endl;
+    BlackLibraryCommon::LogInfo("binder", "Binding: {}", bind_name);
 
     if (BlackLibraryCommon::FileExists(bind_target))
     {
-        std::cout << "Error: file already exists" << std::endl;
+        BlackLibraryCommon::LogError("binder", "File {} already exists", bind_target);
         return false;
     }
 
@@ -114,13 +117,15 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     {
         std::ifstream input_file;
 
-        // std::cout << "bind: " << file << std::endl;
+        BlackLibraryCommon::LogTrace("binder", "Bind: {}", file);
 
-        input_file.open(target_path + '/' + file, std::fstream::in);
+        const auto complete_file_path = target_path + '/' + file;
+
+        input_file.open(complete_file_path, std::fstream::in);
 
         if (!input_file.is_open())
         {
-            std::cout << "Error: input file: " << target_path + '/' + file << " could not be opened" << std::endl;
+            BlackLibraryCommon::LogError("binder", "Input file: {} could not be opened", complete_file_path);
             return false;
         }
 
@@ -143,7 +148,7 @@ bool BlackLibraryBinder::SetBindDir(const std::string &bind_dir)
     if (bind_dir_.empty())
     {
         bind_dir_ = "/mnt/black-library/output";
-        std::cout << "Empty bind dir given, using default: " << bind_dir_ << std::endl;
+        BlackLibraryCommon::LogDebug("binder", "Empty bind_dir given, using default: {}", bind_dir_);
     }
 
     // okay to pop_back(), string isn't empty
@@ -152,11 +157,11 @@ bool BlackLibraryBinder::SetBindDir(const std::string &bind_dir)
 
     if (!BlackLibraryCommon::CheckFilePermission(bind_dir_))
     {
-        std::cout << "Error: binder could not access bind directory" << bind_dir_ << std::endl;
+        BlackLibraryCommon::LogError("binder", "Binder could not accses bind directory: {}", bind_dir_);
         return false;
     }
 
-    std::cout << "Set bind dir: " << bind_dir_ << std::endl;
+    BlackLibraryCommon::LogInfo("binder", "Set bind_dir: {}", bind_dir_);
 
     return true;
 }
