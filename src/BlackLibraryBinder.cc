@@ -125,7 +125,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
         if (!input_file.is_open())
         {
-            BlackLibraryCommon::LogError("binder", "Input file: {} could not be opened", complete_file_path);
+            BlackLibraryCommon::LogError("binder", "Input file: {} failed to open", complete_file_path);
             return false;
         }
 
