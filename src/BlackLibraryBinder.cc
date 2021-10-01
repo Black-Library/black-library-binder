@@ -113,6 +113,8 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     output_file.open(bind_target, std::fstream::out | std::fstream::trunc);
 
+    output_file << "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><style></style></head><body>";
+
     for (const auto & file : doc_list)
     {
         std::ifstream input_file;
@@ -133,6 +135,8 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
         input_file.close();
     }
+
+    output_file << "</body></html>";
 
     output_file.close();
 
