@@ -26,7 +26,7 @@ BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
     storage_dir_(storage_dir),
     mutex_()
 {
-    BlackLibraryCommon::InitRotatingLogger("binder", "/mnt/black-library/log/");
+    BlackLibraryCommon::InitRotatingLogger("binder", "/mnt/black-library/log/", false);
 
     if (storage_dir_.empty())
     {
