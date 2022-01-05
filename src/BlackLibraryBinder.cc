@@ -21,37 +21,53 @@ namespace binder {
 
 namespace BlackLibraryCommon = black_library::core::common;
 
-BlackLibraryBinder::BlackLibraryBinder(const std::string &storage_dir) :
-    bind_dir_(storage_dir),
-    storage_dir_(storage_dir),
+BlackLibraryBinder::BlackLibraryBinder(const njson &config) :
+    bind_dir_(BlackLibraryCommon::DefaultStoragePath),
+    storage_path_(BlackLibraryCommon::DefaultStoragePath),
     mutex_()
 {
-    BlackLibraryCommon::InitRotatingLogger("binder", "/mnt/black-library/log/", false);
+    njson nconfig = config["config"];
 
-    if (storage_dir_.empty())
+    std::string logger_path = BlackLibraryCommon::DefaultLogPath;
+    bool logger_level = BlackLibraryCommon::DefaultLogLevel;
+
+    if (nconfig.contains("logger_path"))
     {
-        storage_dir_ = "/mnt/black-library/store";
-        BlackLibraryCommon::LogDebug("binder", "Empty storage dir given, using default: {}", storage_dir_);
+        logger_path = nconfig["logger_path"];
     }
 
-    // okay to pop_back(), string isn't empty
-    if (storage_dir_.back() == '/')
-        storage_dir_.pop_back();
-
-    if (!BlackLibraryCommon::CheckFilePermission(storage_dir_))
+    if (nconfig.contains("binder_debug_log"))
     {
-        BlackLibraryCommon::LogError("binder", "Could not access storage directory: {}", storage_dir_);
+        logger_level = nconfig["binder_debug_log"];
+    }
+
+    BlackLibraryCommon::InitRotatingLogger("binder", logger_path, logger_level);
+
+    if (nconfig.contains("storage_path"))
+    {
+        storage_path_ = nconfig["storage_path"];
+    }
+
+    if (storage_path_.empty())
+    {
+        storage_path_ = BlackLibraryCommon::DefaultStoragePath;
+        BlackLibraryCommon::LogDebug("binder", "Empty storage dir given, using default: {}", storage_path_);
+    }
+
+    if (!BlackLibraryCommon::CheckFilePermission(storage_path_))
+    {
+        BlackLibraryCommon::LogError("binder", "Could not access storage directory: {}", storage_path_);
         return;
     }
 
-    BlackLibraryCommon::LogInfo("binder", "Binder using storage dir: {}", storage_dir_);
+    BlackLibraryCommon::LogInfo("binder", "Binder using storage dir: {}", storage_path_);
 }
 
 bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::string target_path = storage_dir_ + '/' + uuid;
+    std::string target_path = storage_path_ + uuid;
     BlackLibraryCommon::LogInfo("binder", "Bind target: {}", target_path);
 
     if (!BlackLibraryCommon::FileExists(target_path))

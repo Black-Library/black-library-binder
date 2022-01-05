@@ -8,6 +8,8 @@
 #include <mutex>
 #include <string>
 
+#include <ConfigOperations.h>
+
 namespace black_library {
 
 namespace core {
@@ -16,7 +18,7 @@ namespace binder {
 
 class BlackLibraryBinder {
 public:
-    explicit BlackLibraryBinder(const std::string &storage_dir);
+    explicit BlackLibraryBinder(const njson &config);
     BlackLibraryBinder &operator = (BlackLibraryBinder &&) = default;
 
     bool Bind(const std::string &uuid, const std::string &name);
@@ -24,7 +26,7 @@ public:
 
 private:
     std::string bind_dir_;
-    std::string storage_dir_;
+    std::string storage_path_;
     std::mutex mutex_;
 };
 
