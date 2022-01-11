@@ -21,8 +21,44 @@ namespace binder {
 
 namespace BlackLibraryCommon = black_library::core::common;
 
+size_t GetBindIndex(const std::string &file_name)
+{
+    if (file_name.empty())
+        return 0;
+
+    auto first_pos = file_name.find_last_of("_");
+    auto second_pos = file_name.find_last_of('.');
+
+    if (first_pos == std::string::npos || second_pos == std::string::npos)
+        return 0;
+
+    auto temp_string = file_name.substr(first_pos, second_pos - first_pos);
+
+    first_pos = temp_string.find_last_not_of("0123456789");
+
+    temp_string = temp_string.substr(first_pos + 1, temp_string.size());
+
+    return std::stoull(temp_string);
+}
+
+size_t GetSectionIndex(const std::string &file_name)
+{
+    if (file_name.empty())
+        return 0;
+
+    auto first_pos = file_name.find_first_of("0123456789");
+    auto second_pos = file_name.find_first_of('_');
+
+    if (first_pos == std::string::npos || second_pos == std::string::npos)
+        return 0;
+
+    auto temp_string = file_name.substr(first_pos, second_pos);
+
+    return std::stoull(temp_string);
+}
+
 BlackLibraryBinder::BlackLibraryBinder(const njson &config) :
-    bind_dir_(BlackLibraryCommon::DefaultStoragePath),
+    bind_path_(DefaultBindPath),
     storage_path_(BlackLibraryCommon::DefaultStoragePath),
     mutex_()
 {
@@ -41,12 +77,21 @@ BlackLibraryBinder::BlackLibraryBinder(const njson &config) :
         logger_level = nconfig["binder_debug_log"];
     }
 
-    BlackLibraryCommon::InitRotatingLogger("binder", logger_path, logger_level);
+    if (nconfig.contains("binder_dir"))
+    {
+        bind_path_ = nconfig["binder_dir"];
+    }
 
     if (nconfig.contains("storage_path"))
     {
         storage_path_ = nconfig["storage_path"];
     }
+
+    BlackLibraryCommon::InitRotatingLogger("binder", logger_path, logger_level);
+
+    // okay to pop_back(), string isn't empty
+    if (storage_path_.back() == '/')
+        storage_path_.pop_back();
 
     if (storage_path_.empty())
     {
@@ -70,7 +115,7 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
     std::string target_path = storage_path_ + uuid;
     BlackLibraryCommon::LogInfo("binder", "Bind target: {}", target_path);
 
-    if (!BlackLibraryCommon::FileExists(target_path))
+    if (!BlackLibraryCommon::PathExists(target_path))
     {
         BlackLibraryCommon::LogError("binder", "Binder target does not exist: {}", target_path);
         return false;
@@ -82,10 +127,10 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     for (const auto & file : doc_list)
     {
-        BlackLibraryCommon::LogTrace("binder", "Section file: {} - Number: {}", file, BlackLibraryCommon::GetSectionIndex(file));
+        BlackLibraryCommon::LogTrace("binder", "Section file: {} - Number: {}", file, GetSectionIndex(file));
     }
 
-    size_t last_section_num = BlackLibraryCommon::GetSectionIndex(doc_list.back());
+    size_t last_section_num = GetSectionIndex(doc_list.back());
 
     // document files start at 1
     if (last_section_num != doc_list.size())
@@ -100,13 +145,13 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
 
     for (const auto & file : bind_list)
     {
-        BlackLibraryCommon::LogDebug("binder", "Bind file: {} - {}", file, BlackLibraryCommon::GetBindIndex(file));
+        BlackLibraryCommon::LogDebug("binder", "Bind file: {} - {}", file, GetBindIndex(file));
     }
 
     size_t bind_index = 0;
 
     if (!bind_list.empty())
-        bind_index = BlackLibraryCommon::GetBindIndex(bind_list.back()) + 1;
+        bind_index = GetBindIndex(bind_list.back()) + 1;
 
     char name_buffer [BIND_FILENAME_BUFFER_SIZE];
 
@@ -115,11 +160,11 @@ bool BlackLibraryBinder::Bind(const std::string &uuid, const std::string &name)
         return false;
 
     const std::string bind_name = std::string(name_buffer);
-    const std::string bind_target = bind_dir_ + '/' + bind_name;
+    const std::string bind_target = bind_path_ + '/' + bind_name;
 
     BlackLibraryCommon::LogInfo("binder", "Binding: {}", bind_name);
 
-    if (BlackLibraryCommon::FileExists(bind_target))
+    if (BlackLibraryCommon::PathExists(bind_target))
     {
         BlackLibraryCommon::LogError("binder", "File {} already exists", bind_target);
         return false;
@@ -163,25 +208,25 @@ bool BlackLibraryBinder::SetBindDir(const std::string &bind_dir)
 {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    bind_dir_ = BlackLibraryCommon::SanitizeFilePath(bind_dir);
+    bind_path_ = BlackLibraryCommon::SanitizeFilePath(bind_dir);
 
-    if (bind_dir_.empty())
+    if (bind_path_.empty())
     {
-        bind_dir_ = "/mnt/black-library/output";
-        BlackLibraryCommon::LogDebug("binder", "Empty bind_dir given, using default: {}", bind_dir_);
+        bind_path_ = DefaultBindPath;
+        BlackLibraryCommon::LogDebug("binder", "Empty bind_dir given, using default: {}", bind_path_);
     }
 
     // okay to pop_back(), string isn't empty
-    if (bind_dir_.back() == '/')
-        bind_dir_.pop_back();
+    if (bind_path_.back() == '/')
+        bind_path_.pop_back();
 
-    if (!BlackLibraryCommon::CheckFilePermission(bind_dir_))
+    if (!BlackLibraryCommon::CheckFilePermission(bind_path_))
     {
-        BlackLibraryCommon::LogError("binder", "Binder could not accses bind directory: {}", bind_dir_);
+        BlackLibraryCommon::LogError("binder", "Binder could not access bind directory: {}", bind_path_);
         return false;
     }
 
-    BlackLibraryCommon::LogInfo("binder", "Set bind_dir: {}", bind_dir_);
+    BlackLibraryCommon::LogInfo("binder", "Set bind_dir: {}", bind_path_);
 
     return true;
 }

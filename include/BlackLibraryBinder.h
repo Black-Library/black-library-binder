@@ -16,6 +16,8 @@ namespace core {
 
 namespace binder {
 
+static constexpr const char DefaultBindPath[] = "/mnt/black-library/output/";
+
 class BlackLibraryBinder {
 public:
     explicit BlackLibraryBinder(const njson &config);
@@ -25,7 +27,7 @@ public:
     bool SetBindDir(const std::string &bind_dir);
 
 private:
-    std::string bind_dir_;
+    std::string bind_path_;
     std::string storage_path_;
     std::mutex mutex_;
 };
