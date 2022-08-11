@@ -62,7 +62,7 @@ BlackLibraryBinder::BlackLibraryBinder(const njson &config) :
     storage_path_(BlackLibraryCommon::DefaultStoragePath),
     mutex_()
 {
-    njson nconfig = config["config"];
+    njson nconfig = BlackLibraryCommon::LoadConfig(config);
 
     std::string logger_path = BlackLibraryCommon::DefaultLogPath;
     bool logger_level = BlackLibraryCommon::DefaultLogLevel;
